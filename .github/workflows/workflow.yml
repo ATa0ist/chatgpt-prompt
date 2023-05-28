@@ -1,0 +1,55 @@
+name: Prompt Conversion and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'prompts-zh.json'
+jobs:
+  convert_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # - name: Install dependencies
+    #   run: pip install -r requirements.txt
+
+    - name: Run prompt conversion script
+      run: python prompt转换.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add prompts-zh\(带cmd\).json
+        git commit -m "Update prompts-zh(带cmd).json"
+        git push
+
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: Latest
+        release_name: chatgpt-prompts-with-cmd
+        draft: false
+        prerelease: false
+
+    - name: Upload file to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: prompts-zh(带cmd).json
+        asset_name: prompts-zh(带cmd).json
+        asset_content_type: application/json
